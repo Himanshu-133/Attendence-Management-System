@@ -1,0 +1,569 @@
+
+</div><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enhanced EduTrack - Attendance Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f7fa; margin: 0; padding: 0; min-height: 100vh;}
+    .center-vh { min-height: 100vh; display: flex; align-items: center; justify-content: center;}
+    .login-container { width: 100%; max-width: 370px; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0002; padding: 32px 28px 24px 28px;}
+    .login-container h2 { text-align: center; margin: 0 0 28px 0; color: #1976d2; letter-spacing: 1px;}
+    .login-container label { display: block; margin-bottom: 6px; color: #333; font-weight: 500;}
+    .login-container input[type="text"], .login-container input[type="password"] { width: 100%; padding: 10px 12px; margin-bottom: 18px; border: 1px solid #cfd8dc; border-radius: 5px; font-size: 16px; background: #f7fafc; transition: border-color 0.2s;}
+    .login-container input[type="text"]:focus, .login-container input[type="password"]:focus { border-color: #1976d2; outline: none; background: #fff;}
+    .login-container .options { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;}
+    .login-container .options label { display: flex; align-items: center; font-size: 14px; font-weight: normal; margin-bottom: 0; color: #555;}
+    .login-container .options input[type="checkbox"] { margin-right: 6px;}
+    .login-container .forgot-link { color: #1976d2; text-decoration: none; font-size: 14px; transition: text-decoration 0.2s;}
+    .login-container .forgot-link:hover { text-decoration: underline;}
+    .login-container button[type="submit"] { width: 100%; background: #1976d2; color: #fff; padding: 12px; border: none; border-radius: 5px; font-size: 17px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 6px;}
+    .login-container button[type="submit"]:hover { background: #125ea3;}
+    .login-container .signup-link { display: block; text-align: center; margin-top: 18px; color: #555; font-size: 15px;}
+    .login-container .signup-link a { color: #1976d2; text-decoration: none; font-weight: 500;}
+    .login-container .signup-link a:hover { text-decoration: underline;}
+    .container { max-width: 1200px; margin: 32px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0002; padding: 32px;}
+    h1 { text-align: center; margin-top: 0;}
+    .tabs { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; flex-wrap: wrap;}
+    .tab-btn { padding: 10px 22px; border: none; border-radius: 4px 4px 0 0; background: #e3e9f0; color: #222; font-weight: bold; cursor: pointer; transition: background 0.2s;}
+    .tab-btn.active { background: #1976d2; color: #fff;}
+    .tab-content { padding: 18px 0 0 0;}
+    .flex-row { display: flex; gap: 24px; flex-wrap: wrap;}
+    .panel { background: #fafbfc; border-radius: 8px; box-shadow: 0 1px 4px #0001; padding: 16px; margin-bottom: 24px; flex: 1 1 350px;}
+    table { width: 100%; border-collapse: collapse; margin-top: 12px;}
+    th, td { padding: 8px 10px; border: 1px solid #e3e3e3; text-align: left;}
+    th { background: #f1f5fa;}
+    .status-present { color: #27ae60; font-weight: bold;}
+    .status-absent { color: #e74c3c; font-weight: bold;}
+    .status-late { color: #f39c12; font-weight: bold;}
+    .edit-btn { background: #1976d2; color: #fff; border: none; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 14px; transition: background 0.2s;}
+    .edit-btn:hover { background: #125ea3;}
+    .controls { display: flex; gap: 18px; align-items: center; margin-bottom: 18px;}
+    .course-link { color: #1976d2; text-decoration: underline; cursor: pointer; }
+    .back-link { color: #1976d2; cursor: pointer; text-decoration: underline; margin-bottom: 10px; display: inline-block;}
+    @media (max-width: 900px) { .flex-row { flex-direction: column;} }
+    @media (max-width: 600px) { .container { padding: 12px;} .panel { padding: 10px;} .tabs { flex-direction: column; gap: 4px;} table, th, td { font-size: 13px;} }
+  </style>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div class="center-vh" id="loginPage">
+    <div class="login-container">
+      <h2>Teacher Login</h2>
+      <form id="loginForm" autocomplete="off" method="post" action="#">
+        <label for="teacherid">Teacher ID</label>
+        <input type="text" id="teacherid" name="teacherid" placeholder="Enter your Teacher ID" required autocomplete="username">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+        <div class="options">
+          <label>
+            <input type="checkbox" name="remember" id="remember">
+            Remember me
+          </label>
+          <a href="#" class="forgot-link" onclick="forgotPwd(event)">Forgot password?</a>
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <div class="signup-link">
+        Not registered? <a href="#">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE (hidden by default) -->
+  <div class="container" id="dashboardPage" style="display:none;">
+    <h1>Enhanced EduTrack</h1>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('attendance')">Attendance</button>
+      <button class="tab-btn" onclick="showTab('courses')">Courses</button>
+      <button class="tab-btn" onclick="showTab('messages')">Messages</button>
+      <button class="tab-btn" onclick="showTab('documents')">Documents</button>
+      <button class="tab-btn" onclick="showTab('schedule')">Schedule</button>
+      <button class="tab-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- ATTENDANCE TAB -->
+    <div id="attendance" class="tab-content">
+      <div class="controls">
+        <label>
+          Date:
+          <input type="date" id="attendanceDate" />
+        </label>
+        <label>
+          Course:
+          <select id="courseSelect"></select>
+        </label>
+        <label>
+          Lecture:
+          <select id="lectureSelect"></select>
+        </label>
+      </div>
+      <div class="flex-row" style="gap:24px; margin-bottom:24px;">
+        <div class="panel" style="text-align:center;">
+          <div style="font-size:2em; color:#1976d2;" id="totalEnrolled">0</div>
+          <div>Total Enrolled</div>
+        </div>
+        <div class="panel" style="text-align:center;">
+          <div style="font-size:2em; color:#27ae60;" id="presentCount">0</div>
+          <div>Present</div>
+        </div>
+        <div class="panel" style="text-align:center;">
+          <div style="font-size:2em; color:#f39c12;" id="lateCount">0</div>
+          <div>Late</div>
+        </div>
+      </div>
+      <div class="flex-row">
+        <div class="panel" style="max-width:400px;">
+          <canvas id="attendancePie"></canvas>
+        </div>
+        <div class="panel" style="max-width:500px;">
+          <canvas id="attendanceBar"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Attendance Table</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Attendance (%)</th>
+              <th>Status</th>
+              <th>Edit</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COURSES TAB -->
+    <div id="courses" class="tab-content" style="display:none;">
+      <div id="coursesListPanel">
+        <div class="panel">
+          <h3>Courses</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Faculty</th>
+                <th>Lectures</th>
+                <th>Enrolled</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="coursesTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="courseDetailPanel" style="display:none;">
+        <span class="back-link" onclick="showCoursesList()">&larr; Back to Courses</span>
+        <div class="panel">
+          <h3 id="courseDetailTitle"></h3>
+          <div class="controls">
+            <label>
+              Date:
+              <input type="date" id="courseDetailDate" />
+            </label>
+            <label>
+              Lecture:
+              <select id="courseDetailLecture"></select>
+            </label>
+          </div>
+          <div class="flex-row" style="gap:24px; margin-bottom:24px;">
+            <div class="panel" style="text-align:center;">
+              <div style="font-size:2em; color:#1976d2;" id="courseDetailTotal">0</div>
+              <div>Total Enrolled</div>
+            </div>
+            <div class="panel" style="text-align:center;">
+              <div style="font-size:2em; color:#27ae60;" id="courseDetailPresent">0</div>
+              <div>Present</div>
+            </div>
+            <div class="panel" style="text-align:center;">
+              <div style="font-size:2em; color:#f39c12;" id="courseDetailLate">0</div>
+              <div>Late</div>
+            </div>
+          </div>
+          <div class="flex-row">
+            <div class="panel" style="max-width:400px;">
+              <canvas id="courseDetailPie"></canvas>
+            </div>
+            <div class="panel" style="max-width:500px;">
+              <canvas id="courseDetailBar"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Students</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Attendance (%)</th>
+                  <th>Status</th>
+                  <th>Edit</th>
+                </tr>
+              </thead>
+              <tbody id="courseDetailStudents"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGES TAB -->
+    <div id="messages" class="tab-content" style="display:none;">
+      <div class="panel">
+        <h2>Messages</h2>
+        <div id="messagesList"></div>
+      </div>
+    </div>
+    <!-- DOCUMENTS TAB -->
+    <div id="documents" class="tab-content" style="display:none;">
+      <div class="panel">
+        <h2>Documents</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th>Uploaded</th>
+            </tr>
+          </thead>
+          <tbody id="documentsTable"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- SCHEDULE TAB -->
+    <div id="schedule" class="tab-content" style="display:none;">
+      <div class="panel">
+        <h2>Weekly Schedule</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Monday</th>
+              <th>Tuesday</th>
+              <th>Wednesday</th>
+              <th>Thursday</th>
+              <th>Friday</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+    // LOGIN LOGIC
+    function forgotPwd(e) {
+      e.preventDefault();
+      alert('Please contact your administrator or check your registered email to reset your password.');
+    }
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('dashboardPage').style.display = '';
+      setupAttendanceControls();
+      renderAttendanceTab();
+      renderCoursesTab();
+    });
+    function logout() {
+      document.getElementById('dashboardPage').style.display = 'none';
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('loginForm').reset();
+    }
+
+    // DATA
+    const courses = [
+      { id: "CS101", name: "Computer Science 101", faculty: "Prof. Rajesh Kumar", lectures: ["9:00-10:00", "14:00-15:00"] },
+      { id: "MATH202", name: "Mathematics 202", faculty: "Dr. Priya Sharma", lectures: ["10:00-11:00"] },
+      { id: "PHY303", name: "Physics 303", faculty: "Dr. Vikram Malhotra", lectures: ["11:00-12:00", "15:00-16:00"] }
+    ];
+    const students = Array.from({length: 70}, (_, i) => ({
+      id: `STU${10001 + i}`,
+      name: `Student ${i+1}`,
+      course: courses[i % courses.length].id,
+      attendance: 60 + Math.floor(Math.random() * 40),
+    }));
+    let attendanceRecords = {};
+
+    // Utility
+    function todayStr() {
+      const d = new Date();
+      return d.toISOString().slice(0,10);
+    }
+
+    // TAB LOGIC
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.getElementById(tabId).style.display = '';
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const idx = ['attendance','courses','messages','documents','schedule','logout'].indexOf(tabId);
+      if(idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+      if(tabId === 'attendance') renderAttendanceTab();
+      if(tabId === 'courses') renderCoursesTab();
+      if(tabId === 'messages') renderMessages();
+      if(tabId === 'documents') renderDocuments();
+      if(tabId === 'schedule') renderSchedule();
+    }
+
+    // ATTENDANCE TAB
+    function setupAttendanceControls() {
+      const courseSelect = document.getElementById('courseSelect');
+      const lectureSelect = document.getElementById('lectureSelect');
+      if (courseSelect.options.length === 0) {
+        courses.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          courseSelect.appendChild(opt);
+        });
+      }
+      function populateLectures() {
+        lectureSelect.innerHTML = '';
+        const selectedCourse = courses.find(c => c.id === courseSelect.value);
+        selectedCourse.lectures.forEach(lec => {
+          const opt = document.createElement('option');
+          opt.value = lec;
+          opt.textContent = lec;
+          lectureSelect.appendChild(opt);
+        });
+      }
+      courseSelect.addEventListener('change', () => { populateLectures(); renderAttendanceTab(); });
+      lectureSelect.addEventListener('change', renderAttendanceTab);
+      document.getElementById('attendanceDate').value = todayStr();
+      document.getElementById('attendanceDate').addEventListener('change', renderAttendanceTab);
+      populateLectures();
+    }
+    function getAttendanceFor(date, courseId, lecture) {
+      if (!attendanceRecords[date]) attendanceRecords[date] = {};
+      if (!attendanceRecords[date][courseId]) attendanceRecords[date][courseId] = {};
+      if (!attendanceRecords[date][courseId][lecture]) {
+        attendanceRecords[date][courseId][lecture] = {};
+        students.filter(s => s.course === courseId).forEach(s => {
+          attendanceRecords[date][courseId][lecture][s.id] = "Present";
+        });
+      }
+      return attendanceRecords[date][courseId][lecture];
+    }
+    let attendancePieChart, attendanceBarChart;
+    function renderAttendanceTab() {
+      const date = document.getElementById('attendanceDate').value;
+      const courseId = document.getElementById('courseSelect').value;
+      const lecture = document.getElementById('lectureSelect').value;
+      const courseStudents = students.filter(s => s.course === courseId);
+      const att = getAttendanceFor(date, courseId, lecture);
+      let present = 0, late = 0, absent = 0;
+      courseStudents.forEach(s => {
+        const status = att[s.id];
+        if(status === "Present") present++;
+        else if(status === "Late") late++;
+        else absent++;
+      });
+      document.getElementById('totalEnrolled').textContent = courseStudents.length;
+      document.getElementById('presentCount').textContent = present;
+      document.getElementById('lateCount').textContent = late;
+      const studentsTable = document.getElementById('studentsTable');
+      studentsTable.innerHTML = '';
+      courseStudents.forEach((s, idx) => {
+        const status = att[s.id];
+        const statusClass = status === "Present" ? "status-present"
+                          : status === "Absent" ? "status-absent"
+                          : "status-late";
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.name}</td>
+          <td>${s.attendance}</td>
+          <td class="${statusClass}">${status}</td>
+          <td><button class="edit-btn" onclick="editAttendance('${date}','${courseId}','${lecture}','${s.id}')">Edit</button></td>
+        `;
+        studentsTable.appendChild(tr);
+      });
+      if(attendancePieChart) attendancePieChart.destroy();
+      attendancePieChart = new Chart(document.getElementById('attendancePie'), {
+        type: 'pie',
+        data: {
+          labels: ['Present','Late','Absent'],
+          datasets: [{ data: [present, late, absent], backgroundColor: ['#27ae60','#f39c12','#e74c3c'] }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+      if(attendanceBarChart) attendanceBarChart.destroy();
+      attendanceBarChart = new Chart(document.getElementById('attendanceBar'), {
+        type: 'bar',
+        data: {
+          labels: ['Present','Late','Absent'],
+          datasets: [{ label: 'Count', data: [present, late, absent], backgroundColor: ['#27ae60','#f39c12','#e74c3c'] }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
+    window.editAttendance = function(date, courseId, lecture, studentId) {
+      const att = getAttendanceFor(date, courseId, lecture);
+      const current = att[studentId];
+      const newStatus = prompt("Enter new status (Present, Absent, Late):", current);
+      if (newStatus && ["Present", "Absent", "Late"].includes(newStatus)) {
+        att[studentId] = newStatus;
+        renderAttendanceTab();
+        if(document.getElementById('courseDetailPanel').style.display !== 'none') renderCourseDetail();
+      } else if (newStatus) {
+        alert("Invalid status. Please enter Present, Absent, or Late.");
+      }
+    };
+
+    // COURSES TAB
+    function renderCoursesTab() {
+      document.getElementById('coursesListPanel').style.display = '';
+      document.getElementById('courseDetailPanel').style.display = 'none';
+      const coursesTable = document.getElementById('coursesTable');
+      coursesTable.innerHTML = '';
+      courses.forEach(c => {
+        const enrolled = students.filter(s => s.course === c.id).length;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.name}</td>
+          <td>${c.faculty}</td>
+          <td>${c.lectures.join(', ')}</td>
+          <td>${enrolled}</td>
+          <td><span class="course-link" onclick="showCourseDetail('${c.id}')">View</span></td>
+        `;
+        coursesTable.appendChild(tr);
+      });
+    }
+    window.showCoursesList = function() {
+      document.getElementById('coursesListPanel').style.display = '';
+      document.getElementById('courseDetailPanel').style.display = 'none';
+    }
+    let courseDetailPie, courseDetailBar;
+    window.showCourseDetail = function(courseId) {
+      document.getElementById('coursesListPanel').style.display = 'none';
+      document.getElementById('courseDetailPanel').style.display = '';
+      const c = courses.find(x => x.id === courseId);
+      document.getElementById('courseDetailTitle').textContent = c.name + " (" + c.faculty + ")";
+      const dateInput = document.getElementById('courseDetailDate');
+      const lectureSelect = document.getElementById('courseDetailLecture');
+      dateInput.value = todayStr();
+      lectureSelect.innerHTML = '';
+      c.lectures.forEach(lec => {
+        const opt = document.createElement('option');
+        opt.value = lec;
+        opt.textContent = lec;
+        lectureSelect.appendChild(opt);
+      });
+      dateInput.onchange = renderCourseDetail;
+      lectureSelect.onchange = renderCourseDetail;
+      renderCourseDetail();
+    }
+    function renderCourseDetail() {
+      const courseId = courses.find(c => c.name + " (" + c.faculty + ")" === document.getElementById('courseDetailTitle').textContent).id;
+      const date = document.getElementById('courseDetailDate').value;
+      const lecture = document.getElementById('courseDetailLecture').value;
+      const courseStudents = students.filter(s => s.course === courseId);
+      const att = getAttendanceFor(date, courseId, lecture);
+      let present = 0, late = 0, absent = 0;
+      courseStudents.forEach(s => {
+        const status = att[s.id];
+        if(status === "Present") present++;
+        else if(status === "Late") late++;
+        else absent++;
+      });
+      document.getElementById('courseDetailTotal').textContent = courseStudents.length;
+      document.getElementById('courseDetailPresent').textContent = present;
+      document.getElementById('courseDetailLate').textContent = late;
+      const studentsTable = document.getElementById('courseDetailStudents');
+      studentsTable.innerHTML = '';
+      courseStudents.forEach((s, idx) => {
+        const status = att[s.id];
+        const statusClass = status === "Present" ? "status-present"
+                          : status === "Absent" ? "status-absent"
+                          : "status-late";
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${s.id}</td>
+          <td>${s.name}</td>
+          <td>${s.attendance}</td>
+          <td class="${statusClass}">${status}</td>
+          <td><button class="edit-btn" onclick="editAttendance('${date}','${courseId}','${lecture}','${s.id}')">Edit</button></td>
+        `;
+        studentsTable.appendChild(tr);
+      });
+      if(courseDetailPie) courseDetailPie.destroy();
+      courseDetailPie = new Chart(document.getElementById('courseDetailPie'), {
+        type: 'pie',
+        data: {
+          labels: ['Present','Late','Absent'],
+          datasets: [{ data: [present, late, absent], backgroundColor: ['#27ae60','#f39c12','#e74c3c'] }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+      if(courseDetailBar) courseDetailBar.destroy();
+      courseDetailBar = new Chart(document.getElementById('courseDetailBar'), {
+        type: 'bar',
+        data: {
+          labels: ['Present','Late','Absent'],
+          datasets: [{ label: 'Count', data: [present, late, absent], backgroundColor: ['#27ae60','#f39c12','#e74c3c'] }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    // MESSAGES, DOCUMENTS, SCHEDULE
+    function renderMessages() {
+      const messages = [
+        { from: "Aarav Patel", subject: "Assignment Question", time: "10:23 AM", preview: "Sir, I have a doubt regarding the last programming assignment..." },
+        { from: "Diya Sharma", subject: "Leave Application", time: "Yesterday", preview: "Respected Sir, I would like to apply for leave for 2 days due to..." },
+        { from: "Prof. Ananya Desai", subject: "Faculty Meeting", time: "May 14", preview: "Reminder: There is a faculty meeting scheduled tomorrow at 3 PM..." },
+        { from: "Dr. Vikram Malhotra", subject: "Joint Research Proposal", time: "May 13", preview: "Dear Dr. Sharma, I would like to discuss a potential joint research..." }
+      ];
+      const messagesList = document.getElementById('messagesList');
+      messagesList.innerHTML = '';
+      messages.forEach(m => {
+        const div = document.createElement('div');
+        div.className = "message";
+        div.innerHTML = `<strong>${m.subject}</strong> <span style="color:#888;">(${m.time})</span>
+          <div style="color:#1976d2;">From: ${m.from}</div>
+          <div style="color:#444;">${m.preview}</div>`;
+        messagesList.appendChild(div);
+      });
+    }
+    function renderDocuments() {
+      const documents = [
+        { name: "CS101_Syllabus_2025.pdf", type: "PDF", size: "1.2 MB", uploaded: "May 10, 2025" },
+        { name: "MATH202_Lecture_Notes.pdf", type: "PDF", size: "2.8 MB", uploaded: "May 12, 2025" },
+        { name: "Attendance_Report_April.xlsx", type: "Excel", size: "0.9 MB", uploaded: "May 5, 2025" },
+        { name: "Final_Exam_Schedule.docx", type: "Word", size: "0.5 MB", uploaded: "May 14, 2025" },
+        { name: "Student_Performance_Analysis.pptx", type: "PowerPoint", size: "3.2 MB", uploaded: "May 8, 2025" }
+      ];
+      const documentsTable = document.getElementById('documentsTable');
+      documentsTable.innerHTML = '';
+      documents.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.name}</td><td>${d.type}</td><td>${d.size}</td><td>${d.uploaded}</td>`;
+        documentsTable.appendChild(tr);
+      });
+    }
+    function renderSchedule() {
+      const schedule = [
+        { time: "09:00 - 10:30", monday: "CS101", tuesday: "MATH202", wednesday: "CS101", thursday: "PHY101", friday: "BIO303" },
+        { time: "10:45 - 12:15", monday: "PHY101", tuesday: "ENG205", wednesday: "MATH202", thursday: "CS101", friday: "ENG205" },
+        { time: "13:00 - 14:30", monday: "BIO303", tuesday: "CS101", wednesday: "PHY101", thursday: "MATH202", friday: "CS101" },
+        { time: "14:45 - 16:15", monday: "ENG205", tuesday: "BIO303", wednesday: "ENG205", thursday: "BIO303", friday: "MATH202" }
+      ];
+      const scheduleTable = document.getElementById('scheduleTable');
+      scheduleTable.innerHTML = '';
+      schedule.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${row.time}</td><td>${row.monday}</td><td>${row.tuesday}</td><td>${row.wednesday}</td><td>${row.thursday}</td><td>${row.friday}</td>`;
+        scheduleTable.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
+

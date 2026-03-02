@@ -1,0 +1,107 @@
+body {
+  font-family: sans-serif;
+  background: #f5f7fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 950px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px #0002;
+  padding: 32px;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 4px 4px 0 0;
+  background: #e3e9f0;
+  color: #222;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tab-btn.active {
+  background: #1976d2;
+  color: #fff;
+}
+
+.tab-content {
+  padding: 18px 0 0 0;
+}
+
+.flex-row {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.panel {
+  background: #fafbfc;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px #0001;
+  padding: 16px;
+  margin-bottom: 24px;
+  flex: 1 1 350px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th, td {
+  padding: 8px 10px;
+  border: 1px solid #e3e3e3;
+  text-align: left;
+}
+
+th {
+  background: #f1f5fa;
+}
+
+.status-present { color: #27ae60; font-weight: bold; }
+.status-absent { color: #e74c3c; font-weight: bold; }
+.status-late { color: #f39c12; font-weight: bold; }
+
+.message {
+  background: #f7faff;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 2px #0001;
+}
+
+@media (max-width: 900px) {
+  .flex-row { flex-direction: column; }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+  .panel {
+    padding: 10px;
+  }
+  .tabs {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
